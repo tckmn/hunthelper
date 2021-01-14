@@ -10,7 +10,6 @@ import threading
 import time
 import urllib
 
-PORT = 1337
 BIGSEP = '.~~.'
 SEP = '~.'
 PREFIX = '/_hunthelper_'
@@ -208,5 +207,5 @@ class HuntHandler(http.server.BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(updated.encode())
 
-threading.Thread(target=http.server.HTTPServer(('', PORT), HuntHandler).serve_forever).start()
+threading.Thread(target=http.server.HTTPServer(('', CONFIG.port), HuntHandler).serve_forever).start()
 code.interact(local=locals())
