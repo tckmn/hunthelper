@@ -1,3 +1,33 @@
+INTRODUCTION
+
+hunthelper is a tool designed to help medium-to-large sized teams organize
+their puzzle solving for large-scale puzzle hunts (e.g. MIT Mystery Hunt).
+
+It consists of a bot that integrates with Google Sheets and Discord, which
+automatically does the following when a master spreadsheet is updated:
+
+ - Creates a Google Drive folder for each round and a spreadsheet for each
+   puzzle in the corresponding folder.
+
+ - Creates a Discord category for each round and a text channel for each puzzle
+   in the corresponding category.
+
+ - When a puzzle is solved, adds a [SOLVED] prefix to the name of the sheet,
+   moves the channel to a "solved" category, and announces the solution in a
+   designated channel.
+
+To use hunthelper, you will need to be able to host a small Python webserver
+on a publicly accessible machine (via e.g. port forwarding). More details are
+described below.
+
+hunthelper was hastily thrown together in less than 48 hours, so it may have
+significant bugs. Use at your own risk. (It will never take any destructive
+actions, however, such as deleting sheets or channels.)
+
+
+================================================================================
+
+
 INSTRUCTIONS
 
 1. Copy config.example.json to config.json, where you should insert the
@@ -101,3 +131,13 @@ discord_pingid
 
     The ID of the user or role you want to be pinged when something important
     or unexpected that may require manual intervention occurs.
+
+puzprefix
+
+    The beginning of the URL where puzzles are found, used for automatically
+    generating puzzle links. For example, if a puzzle named "Foo Bar" is on
+    the page https://some.website/puzzles/foo_bar, you should set this to
+    "https://some.website/puzzles/".
+
+    You may also need to edit the `normalize' function in hunthelper.py, which
+    is used solely to transform the puzzle name into the URL suffix.
