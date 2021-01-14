@@ -16,7 +16,19 @@ PREFIX = '/_hunthelper_'
 CONFIG = type('config_object', (), json.load(open('config.json')))
 
 
-linkify = lambda sheet_id: f'https://docs.google.com/spreadsheets/d/{sheet_id}/edit'
+normalize = lambda name: ''.join(ch if ch.isalpha() or ch.isdigit() else
+                                 '_' if ch == ' ' else
+                                 '' for ch in name.lower())
+drivelink = lambda sheet: f'https://docs.google.com/spreadsheets/d/{sheet}/edit'
+puzlink = lambda name, typ: CONFIG.puzprefix+normalize(name) if typ is Puzzle else ''
+linkify1 = lambda cur: f'{drivelink(cur.sheet)},{puzlink(cur.name, type(cur))}'
+linkify2 = lambda name, typ, sheet: f'{puzlink(name, typ)} | {drivelink(sheet)}'.lstrip(' | ')
+
+def rename(x, y, k, v):
+    if k == x:
+        v.name = y
+        return (y, v)
+    return (k, v)
 
 
 class Round:
@@ -57,19 +69,19 @@ class HuntHelper:
         if len(self.cells) == len(cells) and sum(x!=y for x,y in zip(self.cells, cells)) == 1:
             i, x, y = next((i, x, y) for (i, (x, y)) in enumerate(zip(self.cells, cells)) if x != y)
 
-            # # make sure the cell directly above a round remains blank
-            # if not x and y and i+1 < len(cells) and cells[i+1]:
-            #     self.discord_log(f'<@{CONFIG.discord_pingid}> WARNING: accidental round shift, yelling at user')
-            #     return '\n'.join(['"BAD, please press undo"'] * 300)
+            # make sure we don't rename rounds to puzzles or vice versa
+            if x and y and ((x[0] == '#') != (y[0] == '#')):
+                self.discord_log(f'<@{CONFIG.discord_pingid}> WARNING: bad rename, yelling at user')
+                return 'BAD,please undo\n' * 300
 
             # if a puzzle gets renamed, don't change the link
             if x and y:
                 self.discord_log(f'<@{CONFIG.discord_pingid}> WARNING: renaming {x} to {y}')
-                if i == 0 or not cells[i-1]:
-                    self.rounds = {(y if k==x else k): v for k,v in self.rounds.items()}
+                if x[0] == '#':
+                    self.rounds = dict(rename(x,y,k,v) for k,v in self.rounds.items())
                 else:
                     for rnd in self.rounds.values():
-                        rnd.puzzles = {(y if k==x else k): v for k,v in rnd.puzzles.items()}
+                        rnd.puzzles = dict(rename(x,y,k,v) for k,v in rnd.puzzles.items())
 
         # render cells
         self.cells = cells
@@ -115,23 +127,23 @@ class HuntHelper:
                 self.rounds[self.curround] = self.make_round(self.curround)
             if cell not in self.rounds[self.curround].puzzles:
                 self.rounds[self.curround].puzzles[cell] = self.make_puzzle(self.curround, cell)
-            return linkify(self.rounds[self.curround].puzzles[cell].sheet)
+            return linkify1(self.rounds[self.curround].puzzles[cell])
 
         # rendering round
         cell = cell[1:].lstrip()
         self.curround = cell
-        return linkify(self.rounds[cell].sheet) if cell in self.rounds else ''
+        return linkify1(self.rounds[cell]) if cell in self.rounds else ''
 
     def make_puzzle(self, rnd, cell):
         sheet   = self.create_drive(cell, 'spreadsheet', self.rounds[rnd].folder)
-        channel = self.create_discord(cell, 0, parent_id=self.rounds[rnd].group, topic=linkify(sheet))
+        channel = self.create_discord(cell, 0, parent_id=self.rounds[rnd].group, topic=linkify2(cell, Puzzle, sheet))
         return Puzzle(cell, sheet, channel)
 
     def make_round(self, rnd):
         folder  = self.create_drive(rnd, 'folder', CONFIG.drive_root)
         sheet   = self.create_drive(f'[META] {rnd}', 'spreadsheet', folder)
         group   = self.create_discord(rnd, 4)
-        channel = self.create_discord(f'ᴹᴱᵀᴬ-{rnd}', 0, parent_id = group, topic = linkify(sheet))
+        channel = self.create_discord(f'ᴹᴱᵀᴬ-{rnd}', 0, parent_id=group, topic=linkify2('', Round, sheet))
         return Round(f'[META] {rnd}', folder, sheet, group, channel)
 
     def create_drive(self, name, mime, parent):
