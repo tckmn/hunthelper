@@ -83,7 +83,7 @@ class HuntHelper:
     def render(self, x):
         cell, solved = x
 
-        if not cell: return ''
+        if not cell or all(not ch.isalpha() for ch in cell): return ''
 
         # check solvedness
         try:    cur = self.rounds[self.curround].puzzles[cell] if cell[0] != '#' else self.rounds[cell]
