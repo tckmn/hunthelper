@@ -1,0 +1,98 @@
+INSTRUCTIONS
+
+1. Copy config.example.json to config.json, where you should insert the
+   appropriate values as you go through steps 2-4. (The settings are described
+   in further detail in the CONFIGURATION section below.)
+
+2. Set up port forwarding to the machine you want to run hunthelper on, and
+   forward port 80 to any port on that machine.
+
+3. Create a Google Cloud Platform project at [1]. Enable the Drive API by
+   following the instructions at [2], obtaining a client ID and secret. Obtain
+   a refresh token with the /auth/drive scope at [3]. Copy the ID of the folder
+   you want puzzles to go in from its URL.
+
+     [1]: https://console.developers.google.com
+     [2]: https://developers.google.com/drive/api/v3/enable-drive-api
+     [3]: https://developers.google.com/oauthplayground/
+
+4. Create a Discord bot at [4], obtaining a bot token. Add the bot to your
+   Discord server with admin privileges. Enable Developer Mode in Discord under
+   User Settings -> Appearance, which will allow copying the various IDs
+   necessary for further configuration (right click -> Copy ID).
+
+     [4]: https://discord.com/developers/applications/
+
+5. Open your master sheet. Put
+
+     =IMPORTDATA("http://your.public.ip.address/_hunthelper_"&ENCODEURL( REGEXREPLACE(JOIN("~.",$X$n:$X$500), "(~\.)+$", "") & ".~~." & REGEXREPLACE(JOIN("~.",$Y$n:$Y$500), "(~\.)+$", "") ))
+
+   in row n of the column you want links in, where
+
+     X = column with puzzle names
+     Y = column with puzzle answers
+     n = row with first puzzle
+
+   If this randomly breaks sometimes, you may have to apply the workaround
+   described by Paolo Lacuesta at [5].
+
+     [5]: https://support.google.com/docs/forum/AAAABuH1jm0YMhLzXEfwkI/
+
+6. Run ./hunthelper.py from this directory for the duration of the hunt.
+
+
+================================================================================
+
+
+CONFIGURATION
+
+Here are short descriptions of each configuration option you need to specify in
+config.json.
+
+port
+
+    The local port on your machine where web traffic to your public IP is being
+    forwarded.
+
+drive_client_id
+drive_client_secret
+
+    The OAuth 2.0 credentials for your Google Cloud Platform project. These can
+    be found under "Credentials" on the Google developer console (after you
+    have created them).
+
+drive_refresh_token
+
+    An OAuth 2.0 refresh token, which must have the /auth/drive scope. You can
+    generate one using e.g. the OAuth Playground linked above.
+
+drive_root
+
+    The ID of the folder you want puzzles to be kept in. This can be found by
+    opening the folder in a web browser and copying the long alphanumeric
+    string in the URL.
+
+discord_bot
+
+    Your Discord bot's token, found in the Discord Developer Portal under the
+    "Bot" section of your application.
+
+discord_guild
+
+    The ID of the Discord server where you want channel groups and channels to
+    be created for each puzzle.
+
+discord_log
+
+    The ID of the Discord channel in your server where you want informational
+    messages to be logged.
+
+discord_solved
+
+    The ID of the Discord channel group where you want solved puzzles to be
+    moved automatically.
+
+discord_pingid
+
+    The ID of the user or role you want to be pinged when something important
+    or unexpected that may require manual intervention occurs.
