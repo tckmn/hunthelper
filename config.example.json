@@ -1,0 +1,11 @@
+{
+    "drive_client_id":     "000000000000-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.apps.googleusercontent.com",
+    "drive_client_secret": "aaaaaaa_aaaaaaaaaaaaaaaa",
+    "drive_refresh_token": "1//0f_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "drive_root":          "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "discord_bot":         "aaaaaaaaaaaaaaaaaaaaaaaa.a_aaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "discord_guild":       "000000000000000000",
+    "discord_log":         "000000000000000000",
+    "discord_solved":      "000000000000000000",
+    "discord_pingid":      "000000000000000000"
+}
