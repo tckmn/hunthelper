@@ -102,6 +102,7 @@ class HuntHelper:
             })
             cur.solved = True
             self.discord_log(f'marked as solved: {cur.name} with answer {solved}')
+            self.discord_log(f'Puzzle *{cur.name}* solved (answer **{solved}**)! :tada:', CONFIG.discord_announce)
 
         # check the other way
         if cur and cur.solved and not solved:
@@ -182,8 +183,8 @@ class HuntHelper:
             self.drive_token = resp['access_token']
             self.drive_expires = time.time() + resp['expires_in']
 
-    def discord_log(self, text):
-        requests.post(f'https://discord.com/api/v8/channels/{CONFIG.discord_log}/messages', json={
+    def discord_log(self, text, chan=None):
+        requests.post(f'https://discord.com/api/v8/channels/{chan or CONFIG.discord_log}/messages', json={
             'content': text
         }, headers={
             'Authorization': f'Bot {CONFIG.discord_bot}'

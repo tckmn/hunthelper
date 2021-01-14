@@ -87,6 +87,11 @@ discord_log
     The ID of the Discord channel in your server where you want informational
     messages to be logged.
 
+discord_announce
+
+    The ID of the Discord channel in your server where you want messages
+    relevant to all hunters to be announced (e.g. when a puzzle is solved).
+
 discord_solved
 
     The ID of the Discord channel group where you want solved puzzles to be
