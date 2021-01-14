@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 
+import code
 import http.server
 import itertools
 import json
 import pickle
 import requests
+import threading
 import time
 import urllib
 
@@ -206,4 +208,5 @@ class HuntHandler(http.server.BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(updated.encode())
 
-http.server.HTTPServer(('', PORT), HuntHandler).serve_forever()
+threading.Thread(target=http.server.HTTPServer(('', PORT), HuntHandler).serve_forever).start()
+code.interact(local=locals())
