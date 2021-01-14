@@ -56,10 +56,10 @@ class HuntHelper:
         if len(self.cells) == len(cells) and sum(x!=y for x,y in zip(self.cells, cells)) == 1:
             i, x, y = next((i, x, y) for (i, (x, y)) in enumerate(zip(self.cells, cells)) if x != y)
 
-            # make sure the cell directly above a round remains blank
-            if not x and y and i+1 < len(cells) and cells[i+1]:
-                self.discord_log(f'<@{CONFIG.discord_pingid}> WARNING: accidental round shift, yelling at user')
-                return '\n'.join(['"BAD, please press undo"'] * 300)
+            # # make sure the cell directly above a round remains blank
+            # if not x and y and i+1 < len(cells) and cells[i+1]:
+            #     self.discord_log(f'<@{CONFIG.discord_pingid}> WARNING: accidental round shift, yelling at user')
+            #     return '\n'.join(['"BAD, please press undo"'] * 300)
 
             # if a puzzle gets renamed, don't change the link
             if x and y:
@@ -82,12 +82,10 @@ class HuntHelper:
     def render(self, x):
         cell, solved = x
 
-        if not cell:
-            self.curround = None
-            return ''
+        if not cell: return ''
 
         # check solvedness
-        try:    cur = self.rounds[self.curround].puzzles[cell] if self.curround else self.rounds[cell]
+        try:    cur = self.rounds[self.curround].puzzles[cell] if cell[0] != '#' else self.rounds[cell]
         except: cur = None
         if cur and not cur.solved and solved:
             self.drive_check_token()
@@ -110,7 +108,7 @@ class HuntHelper:
             self.discord_log(f'<@{CONFIG.discord_pingid}> puzzle unsolved???')
 
         # rendering puzzle
-        if self.curround:
+        if cell[0] != '#':
             if self.curround not in self.rounds:
                 self.rounds[self.curround] = self.make_round(self.curround)
             if cell not in self.rounds[self.curround].puzzles:
@@ -118,6 +116,7 @@ class HuntHelper:
             return linkify(self.rounds[self.curround].puzzles[cell].sheet)
 
         # rendering round
+        cell = cell[1:].lstrip()
         self.curround = cell
         return linkify(self.rounds[cell].sheet) if cell in self.rounds else ''
 
