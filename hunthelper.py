@@ -196,6 +196,7 @@ class HuntHelper:
             self.drive_expires = time.time() + resp['expires_in']
 
     def discord_log(self, text, chan=None):
+        print(f'(log {chan}) {text}')
         requests.post(f'https://discord.com/api/v8/channels/{chan or CONFIG.discord_log}/messages', json={
             'content': text
         }, headers={
@@ -220,5 +221,9 @@ class HuntHandler(http.server.BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(updated.encode())
 
-threading.Thread(target=http.server.HTTPServer(('', CONFIG.port), HuntHandler).serve_forever).start()
+server = http.server.HTTPServer(('', CONFIG.port), HuntHandler)
+threading.Thread(target=server.serve_forever).start()
+helper.discord_log('bot started')
 code.interact(local=locals())
+helper.discord_log('bot stopped manually')
+server.shutdown()
