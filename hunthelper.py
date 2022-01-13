@@ -17,7 +17,7 @@ CONFIG = type('config_object', (), json.load(open('config.json')))
 
 
 normalize = lambda name: ''.join(ch if ch.isalpha() or ch.isdigit() else
-                                 '_' if ch == ' ' else
+                                 '-' if ch == ' ' else
                                  '' for ch in name.lower())
 drivelink = lambda sheet: f'https://docs.google.com/spreadsheets/d/{sheet}/edit'
 puzlink = lambda name, typ: CONFIG.puzprefix+normalize(name) if typ is Puzzle else ''
@@ -114,12 +114,12 @@ class HuntHelper:
             })
             cur.solved = True
             self.discord_log(f'marked as solved: {cur.name} with answer {solved}')
-            self.discord_log(f'Puzzle *{cur.name}* solved (answer **{solved}**)! :tada:', CONFIG.discord_announce)
+            self.discord_log(f'Puzzle *{cur.name}* solved! :tada:', CONFIG.discord_announce)
 
         # check the other way
         if cur and cur.solved and not solved:
             print(x)
-            self.discord_log(f'<@{CONFIG.discord_pingid}> puzzle unsolved???')
+            # self.discord_log(f'<@{CONFIG.discord_pingid}> puzzle unsolved???')
 
         # rendering puzzle
         if cell[0] != '#':
@@ -212,6 +212,10 @@ class HuntHandler(http.server.BaseHTTPRequestHandler):
         print(self.path)
         if self.path.startswith(PREFIX):
             cells, solved = urllib.parse.unquote(self.path[len(PREFIX):]).split(BIGSEP)
+            for mapping in reversed(open('mapping').read().split('\n')[:-1]):
+                x, y = mapping.split('\t')
+                cells = cells.replace(y, x)
+            print(cells)
             updated = helper.update(cells.split(SEP), solved.split(SEP))
         else:
             updated = 'bad'
