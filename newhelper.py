@@ -12,7 +12,7 @@ import time
 import urllib
 
 PATH = '/_hunthelper_'
-CONFIG = type('config_object', (), json.load(open('config.json')))
+CONFIG = lambda: type('config_object', (), json.load(open('config.json')))
 
 
 normalize = lambda name: ''.join(ch if ch.isalpha() or ch.isdigit() else
@@ -20,7 +20,9 @@ normalize = lambda name: ''.join(ch if ch.isalpha() or ch.isdigit() else
                                  '' for ch in name.lower()) or name
 metafy = lambda name: f'[META] {name[1:].strip()}' if name[0] == '#' else name
 demetafy = lambda name: f'{name[1:].strip()}' if name[0] == '#' else name
-ping = f'<@{CONFIG.discord_pingid}>'
+fixify = lambda url, is_meta: url.replace('puzzle', 'round') if is_meta else url
+fixify = lambda url, is_meta: url
+ping = f'<@{CONFIG().discord_pingid}>'
 
 class NormDict:
     def __init__(self):
@@ -45,12 +47,13 @@ class HuntHelper:
         self.puzzles = NormDict()
         self.drive_token = ''
         self.drive_expires = 0
+        self.solvecount = 0
 
     def __getstate__(self): return self.__dict__
     def __setstate__(self, d): self.__dict__ = d
 
     def drivelink(self, name, override=None): return f'https://docs.google.com/spreadsheets/d/{override or self.puzzles.get(name, "drive")}/edit'
-    def puzlink(self, name): return CONFIG.puzprefix + normalize(demetafy(name))
+    def puzlink(self, name): return fixify(CONFIG().puzprefix, name[0] == '#') + normalize(demetafy(name))
     def links(self, name): return { 'drive': self.drivelink(name), 'puzzle': self.puzlink(name) }
 
     def handle(self, data):
@@ -80,7 +83,7 @@ class HuntHelper:
             }
 
         elif action == 'solve':
-            self.discord_log(f'Puzzle *{metafy(name)}* solved with answer **{data["ans"]}**! :tada:')
+            self.discord_log(f'Puzzle *{metafy(name)}* solved with answer **{data["ans"]}**! :tada:', CONFIG().discord_announce)
             self.mark_solved(name)
             return {}
 
@@ -95,7 +98,7 @@ class HuntHelper:
         truename = metafy(name)
 
         if is_round:
-            drive_parent = self.create_drive(name[1:].strip(), 'folder', CONFIG.drive_root)
+            drive_parent = self.create_drive(name[1:].strip(), 'folder', CONFIG().drive_root)
             discord_parent = self.create_discord(name[1:].strip(), 4)
         else:
             drive_parent = self.puzzles.get(rname, '^drive')
@@ -115,10 +118,11 @@ class HuntHelper:
 
     def mark_solved(self, name):
         requests.patch(f'https://discord.com/api/v8/channels/{self.puzzles.get(name, "discord")}', json={
-            'parent_id': CONFIG.discord_solved
+            'parent_id': CONFIG().discord_solved[self.solvecount // 50]
         }, headers={
-            'Authorization': f'Bot {CONFIG.discord_bot}'
+            'Authorization': f'Bot {CONFIG().discord_bot}'
         })
+        self.solvecount += 1
 
         self.drive_check_token()
         requests.patch(f'https://www.googleapis.com/drive/v3/files/{self.puzzles.get(name, "drive")}', json={
@@ -142,15 +146,15 @@ class HuntHelper:
         try:
             return json.loads(resp.text)['id']
         except:
-            self.discord_log(f'failed! <@{CONFIG.discord_pingid}>')
+            self.discord_log(f'failed! <@{CONFIG().discord_pingid}>')
             return 'FAILED'
 
     def drive_check_token(self):
         if self.drive_expires < time.time() + 10:
             resp = requests.post('https://oauth2.googleapis.com/token', {
-                'client_id': CONFIG.drive_client_id,
-                'client_secret': CONFIG.drive_client_secret,
-                'refresh_token': CONFIG.drive_refresh_token,
+                'client_id': CONFIG().drive_client_id,
+                'client_secret': CONFIG().drive_client_secret,
+                'refresh_token': CONFIG().drive_refresh_token,
                 'grant_type': 'refresh_token'
             })
             print(resp)
@@ -160,12 +164,12 @@ class HuntHelper:
             self.drive_expires = time.time() + resp['expires_in']
 
     def create_discord(self, name, chtype, **extra):
-        resp = requests.post(f'https://discord.com/api/v8/guilds/{CONFIG.discord_guild}/channels', json={
+        resp = requests.post(f'https://discord.com/api/v8/guilds/{CONFIG().discord_guild}/channels', json={
             'name': name,
             'type': chtype,
             **extra
         }, headers={
-            'Authorization': f'Bot {CONFIG.discord_bot}'
+            'Authorization': f'Bot {CONFIG().discord_bot}'
         })
         print(resp)
         print(resp.text)
@@ -173,18 +177,19 @@ class HuntHelper:
         try:
             return json.loads(resp.text)['id']
         except:
-            self.discord_log(f'failed! <@{CONFIG.discord_pingid}>')
+            self.discord_log(f'failed! <@{CONFIG().discord_pingid}>')
             return 'FAILED'
 
     def discord_log(self, text, chan=None):
         print(f'(log {chan}) {text}')
-        resp = requests.post(f'https://discord.com/api/v8/channels/{chan or CONFIG.discord_log}/messages', json={
+        resp = requests.post(f'https://discord.com/api/v8/channels/{chan or CONFIG().discord_log}/messages', json={
             'content': text
         }, headers={
-            'Authorization': f'Bot {CONFIG.discord_bot}'
+            'Authorization': f'Bot {CONFIG().discord_bot}'
         })
-        print(resp)
-        print(resp.text)
+        if resp.status_code // 100 != 2:
+            print(resp)
+            print(resp.text)
 
 
 try:    helper = pickle.load(open('helperdata', 'rb'))
@@ -204,7 +209,7 @@ class HuntHandler(http.server.BaseHTTPRequestHandler):
 # helper.drive_check_token()
 # __import__('sys').exit()
 
-server = http.server.HTTPServer(('', CONFIG.port), HuntHandler)
+server = http.server.HTTPServer(('', CONFIG().port), HuntHandler)
 threading.Thread(target=server.serve_forever).start()
 helper.discord_log('bot started')
 code.interact(local=locals())

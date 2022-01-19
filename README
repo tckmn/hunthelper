@@ -1,3 +1,11 @@
+NEWHELPER
+
+This README applies to the file hunthelper.py, which is the old version used in
+2021. The file newhelper.py contains a much better and more reliable version;
+this README will be updated at some point to reflect this.
+
+================================================================================
+
 INTRODUCTION
 
 hunthelper is a tool designed to help medium-to-large sized teams organize
